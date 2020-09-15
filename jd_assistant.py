@@ -1061,7 +1061,7 @@ class Assistant(object):
                 amount_div = table_body.find('div', {'class': 'amount'})
                 if amount_div:
                     spans = amount_div.select('span')
-                    pay_method = get_tag_value(spans, index=1)
+                    pay_method = get_tag_value(spans, index=0)
                     # if the order is waiting for payment, the price after the discount is shown.
                     sum_price = get_tag_value(amount_div.select('strong'), index=1)[1:] if wait_payment \
                         else get_tag_value(spans, index=0)[4:]
@@ -1200,7 +1200,7 @@ class Assistant(object):
             'skuId': sku_id,
             'num': num,
             'addressId': default_address['id'],
-            'yuShou': str(bool(int(init_info['seckillSkuVO']['extMap'].get('YuShou', '0')))).lower(),
+            'yuShou': str(bool(int(init_info['seckillSkuVO']['extMap'].get('YuShou', 0)))).lower(),
             'isModifyAddress': 'false',
             'name': default_address['name'],
             'provinceId': default_address['provinceId'],
@@ -1301,8 +1301,8 @@ class Assistant(object):
             logger.info('第[%s/%s]次尝试抢购商品:%s', count, retry, sku_id)
 
             self.request_seckill_url(sku_id)
-            if not fast_mode:
-                self.request_seckill_checkout_page(sku_id, num)
+            #if not fast_mode:
+                #self.request_seckill_checkout_page(sku_id, num)
 
             if self.submit_seckill_order(sku_id, num):
                 return True
