@@ -8,7 +8,7 @@ if __name__ == '__main__':
     https://github.com/tychxn/jd-assistant/wiki/1.-%E4%BA%AC%E4%B8%9C%E6%8A%A2%E8%B4%AD%E5%8A%A9%E6%89%8B%E7%94%A8%E6%B3%95
     """
 
-    sku_ids = '100005921751,100005921753,100010643780'  # 商品id
+    sku_ids = '100010643780,100005921751,100005921753'  # 商品id
     area = '3_51035_39620'  # 区域id
     asst = Assistant()  # 初始化
     asst.login_by_QRcode()  # 扫码登陆

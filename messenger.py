@@ -12,12 +12,12 @@ from log import logger
 class Messenger(object):
     """消息推送类"""
 
-    def __init__(self, sc_key):
-        if not sc_key:
-            raise AsstException('sc_key can not be empty')
+    def __init__(self, email_url):
+        if not email_url:
+            raise AsstException('email url can not be empty')
 
-        self.sc_key = sc_key
-
+        self.email_url = email_url
+    """
     def send(self, text, desp=''):
         if not text.strip():
             logger.error('Text of message is empty!')
@@ -28,7 +28,7 @@ class Messenger(object):
 
         try:
             resp = requests.get(
-                'https://sc.ftqq.com/{}.send?text={}&desp={}'.format(self.sc_key, text, desp)
+                'https://sc.ftqq.com/{}.send?text={}&desp={}'.format(self.email_url, text, desp)
             )
             resp_json = json.loads(resp.text)
             if resp_json.get('errno') == 0:
@@ -39,3 +39,17 @@ class Messenger(object):
             logger.error('Request error: %s', req_error)
         except Exception as e:
             logger.error('Fail to send message [text: %s, desp: %s]: %s', text, desp, e)
+    """
+    def send(self):
+        params = {}
+        params['emailContext'] = "抢购成功"
+        params['emailSubject'] = '抢购成功'
+        params['fromText'] = '抢购成功'
+        params['havePic'] = False
+        params['weiboUserName'] = "京东抢购"
+        #params['weiboUrl'] = "https://m.weibo.cn/" + str(self.user_id) + "/" + str(self.weibo[0]['id'])
+        params['sendTo'] = self.email_url
+        resp = requests.post(url='http://47.100.218.0:8081/myEmail/sendEmailPost', json=params)
+        print(resp.text)
+if __name__=='__main__':
+    Messenger().send()
