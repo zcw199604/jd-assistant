@@ -11,7 +11,9 @@ class Timer(object):
 
         # '2018-09-28 22:45:50.000'
         self.buy_time = datetime.strptime(buy_time, "%Y-%m-%d %H:%M:%S.%f")
-        self.sleep_interval = sleep_interval
+        times = (self.buy_time.timestamp() - datetime.now().timestamp())
+        logger.info("休眠时长: %f" %times)
+        self.sleep_interval = times
 
     def start(self):
         logger.info('正在等待到达设定时间:%s' % self.buy_time)

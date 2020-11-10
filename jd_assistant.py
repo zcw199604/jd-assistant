@@ -1229,7 +1229,11 @@ class Assistant(object):
             'eid': self.eid,
             'fp': self.fp,
             'token': token,
-            'pru': ''
+            'pru': '',
+            'provinceName':'北京',
+            'cityName':'海淀区',
+            'countyName':'四环到五环之间',
+            'townName':''
         }
         return data
 
@@ -1282,7 +1286,7 @@ class Assistant(object):
             return False
 
     @deprecated
-    def exec_seckill(self, sku_id, retry=4, interval=4, num=1, fast_mode=True):
+    def exec_seckill(self, sku_id,area_id, retry=1, interval=4, num=1, fast_mode=True):
         """立即抢购
 
         抢购商品的下单流程与普通商品不同，不支持加入购物车，可能需要提前预约，主要执行流程如下：
@@ -1297,21 +1301,31 @@ class Assistant(object):
         :param fast_mode: 快速模式：略过访问抢购订单结算页面这一步骤，默认为 True
         :return: 抢购结果 True/False
         """
+
+        while True:
+            if not self.if_item_can_be_ordered(sku_ids={sku_id: 1}, area=area_id):
+                logger.info('%s 不满足下单条件，%ss后进行下一次查询', sku_id, 3)
+            else:
+                break
+            time.sleep(3)
         for count in range(1, retry + 1):
             logger.info('第[%s/%s]次尝试抢购商品:%s', count, retry, sku_id)
 
             self.request_seckill_url(sku_id)
             #if not fast_mode:
-                #self.request_seckill_checkout_page(sku_id, num)
+            self.request_seckill_checkout_page(sku_id, num)
 
             if self.submit_seckill_order(sku_id, num):
                 return True
             else:
                 logger.info('休息%ss', interval)
                 time.sleep(interval)
+
         else:
             logger.info('执行结束，抢购%s失败！', sku_id)
+            self.exec_seckill(sku_id, area_id)
             return False
+
 
     @deprecated
     def exec_seckill_by_time(self, sku_ids, buy_time, retry=4, interval=4, num=1, fast_mode=True):
@@ -1358,7 +1372,7 @@ class Assistant(object):
         t.start()
 
         self.add_item_to_cart(sku_ids={sku_id: num})
-
+        self.get_checkout_page_detail()
         for count in range(1, retry + 1):
             logger.info('第[%s/%s]次尝试提交订单', count, retry)
             if self.submit_order():
@@ -1367,6 +1381,11 @@ class Assistant(object):
             time.sleep(interval)
         else:
             logger.info('执行结束，提交订单失败！')
+
+    def start_submit_order(self,buy_time):
+        t = Timer(buy_time=buy_time)
+        t.start()
+        logger.info("开始执行任务")
 
     @check_login
     def buy_item_in_stock(self, sku_ids, area, wait_all=False, stock_interval=3, submit_retry=3, submit_interval=5):
