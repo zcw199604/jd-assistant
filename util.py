@@ -221,6 +221,15 @@ def check_login(func):
 
     return new_func
 
+def getSeckillInitializationInformation(func):
+    @functools.wraps(func)
+    def new_func(self, *args, **kwargs):
+        if not self.is_login:
+            logger.info("{0} 需登陆后调用，开始扫码登陆".format(func.__name__))
+            self.login_by_QRcode()
+        return func(self, *args, **kwargs)
+    return new_func
+
 
 def get_random_useragent():
     """生成随机的UserAgent

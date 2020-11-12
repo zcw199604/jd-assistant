@@ -1086,7 +1086,6 @@ class Assistant(object):
         except Exception as e:
             logger.error(e)
 
-    @deprecated
     def _get_seckill_url(self, sku_id):
         """获取商品的抢购链接
 
@@ -1108,7 +1107,7 @@ class Assistant(object):
             'Host': 'itemko.jd.com',
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
-        retry_interval = 0.5
+        retry_interval = 0.1
 
         while True:
             resp = self.sess.get(url=url, headers=headers, params=payload)
@@ -1124,7 +1123,7 @@ class Assistant(object):
                 logger.info("抢购链接获取失败，%s不是抢购商品或抢购页面暂未刷新，%s秒后重试", sku_id, retry_interval)
                 time.sleep(retry_interval)
 
-    @deprecated
+
     def request_seckill_url(self, sku_id):
         """访问商品的抢购链接（用于设置cookie等）
         :param sku_id: 商品id
@@ -1137,9 +1136,9 @@ class Assistant(object):
             'Host': 'marathon.jd.com',
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
-        self.sess.get(url=self.seckill_url.get(sku_id), headers=headers, allow_redirects=False)
+        #self.sess.get(url=self.seckill_url.get(sku_id), headers=headers, allow_redirects=False)
 
-    @deprecated
+
     def request_seckill_checkout_page(self, sku_id, num=1):
         """访问抢购订单结算页面
         :param sku_id: 商品id
@@ -1159,7 +1158,7 @@ class Assistant(object):
         }
         self.sess.get(url=url, params=payload, headers=headers)
 
-    @deprecated
+
     def _get_seckill_init_info(self, sku_id, num=1):
         """获取秒杀初始化信息（包括：地址，发票，token）
         :param sku_id:
@@ -1179,7 +1178,7 @@ class Assistant(object):
         resp = self.sess.post(url=url, data=data, headers=headers)
         return parse_json(resp.text)
 
-    @deprecated
+
     def _gen_seckill_order_data(self, sku_id, num=1):
         """生成提交抢购订单所需的请求体参数
         :param sku_id: 商品id
@@ -1230,14 +1229,14 @@ class Assistant(object):
             'fp': self.fp,
             'token': token,
             'pru': '',
-            'provinceName':'北京',
-            'cityName':'海淀区',
-            'countyName':'四环到五环之间',
-            'townName':''
+            'provinceName': default_address['provinceName'],
+            'cityName': default_address['cityName'],
+            'countyName': default_address['countyName'],
+            'townName': default_address['townName']
         }
         return data
 
-    @deprecated
+
     def submit_seckill_order(self, sku_id, num=1):
         """提交抢购（秒杀）订单
         :param sku_id: 商品id
@@ -1260,6 +1259,7 @@ class Assistant(object):
 
         resp_json = None
         try:
+            logger.info("准备抢购,商品id :%s" % sku_id)
             resp = self.sess.post(url=url, headers=headers, params=payload,
                                   data=self.seckill_order_data.get(sku_id), timeout=5)
             logger.info(resp.text)
@@ -1285,8 +1285,8 @@ class Assistant(object):
             logger.info('抢购失败，返回信息: %s', resp_json)
             return False
 
-    @deprecated
-    def exec_seckill(self, sku_id,area_id, retry=1, interval=4, num=1, fast_mode=True):
+
+    def exec_seckill(self, sku_id, retry=1, interval=0.1, num=1, fast_mode=True):
         """立即抢购
 
         抢购商品的下单流程与普通商品不同，不支持加入购物车，可能需要提前预约，主要执行流程如下：
@@ -1301,19 +1301,20 @@ class Assistant(object):
         :param fast_mode: 快速模式：略过访问抢购订单结算页面这一步骤，默认为 True
         :return: 抢购结果 True/False
         """
-
+        """
         while True:
             if not self.if_item_can_be_ordered(sku_ids={sku_id: 1}, area=area_id):
                 logger.info('%s 不满足下单条件，%ss后进行下一次查询', sku_id, 3)
             else:
                 break
             time.sleep(3)
+        """
         for count in range(1, retry + 1):
             logger.info('第[%s/%s]次尝试抢购商品:%s', count, retry, sku_id)
 
             self.request_seckill_url(sku_id)
-            #if not fast_mode:
-            self.request_seckill_checkout_page(sku_id, num)
+            if not fast_mode:
+                self.request_seckill_checkout_page(sku_id, num)
 
             if self.submit_seckill_order(sku_id, num):
                 return True
@@ -1323,12 +1324,12 @@ class Assistant(object):
 
         else:
             logger.info('执行结束，抢购%s失败！', sku_id)
-            self.exec_seckill(sku_id, area_id)
+            #self.exec_seckill(sku_id)
             return False
 
 
-    @deprecated
-    def exec_seckill_by_time(self, sku_ids, buy_time, retry=4, interval=4, num=1, fast_mode=True):
+
+    def exec_seckill_by_time(self, sku_ids, buy_time, retry=1, interval=0.1, num=1, fast_mode=True):
         """定时抢购
         :param sku_ids: 商品id，多个商品id用逗号进行分割，如"123,456,789"
         :param buy_time: 下单时间，例如：'2018-09-28 22:45:50.000'
@@ -1340,6 +1341,12 @@ class Assistant(object):
         """
         items_dict = parse_sku_id(sku_ids=sku_ids)
         logger.info('准备抢购商品:%s', list(items_dict.keys()))
+        for sku_id in items_dict:
+            if not self.seckill_init_info.get(sku_id):
+                logger.info("准备缓存订单基本信息")
+                order_base_info = self._get_seckill_init_info(sku_id)
+                logger.info("订单基本信息获取成功 : %s" % order_base_info)
+                self.seckill_init_info[sku_id] = order_base_info
 
         t = Timer(buy_time=buy_time)
         t.start()

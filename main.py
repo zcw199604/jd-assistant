@@ -13,11 +13,15 @@ if __name__ == '__main__':
     asst = Assistant()  # 初始化
 
     asst.login_by_QRcode()  # 扫码登陆
+    # 定时启动任务
+    #asst.start_submit_order('2020-11-10 23:59:59.830')
+    # 根据库存自动下单商品
     #asst.buy_item_in_stock(sku_ids=sku_ids, area=area, wait_all=False, stock_interval=5)  # 根据商品是否有货自动下单
     #asst.setSystemTime()
-
-    asst.start_submit_order('2020-11-10 16:33:59.830')
-    asst.exec_seckill(sku_ids,area_id=area)
+    # 抢购商品-> 整点放出抢购链接，根据抢购链接进行下单
+    #asst.exec_seckill(sku_ids)
+    asst.exec_seckill_by_time(sku_ids,'2020-11-12 15:06:00.000')
+    #print(asst._get_seckill_init_info(sku_ids))
     #print(asst.if_item_can_be_ordered(sku_ids=sku_ids, area=area))
     # 6个参数：
     # sku_ids: 商品id。可以设置多个商品，也可以带数量，如：'1234' 或 '1234,5678' 或 '1234:2' 或 '1234:2,5678:3'
